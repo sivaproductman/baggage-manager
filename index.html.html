@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Travel Bag Tracker</title>
+  <meta name="theme-color" content="#0ea5e9" />
+  <style>
+    :root{ --bg:#0b1220; --panel:#111827; --muted:#1f2937; --text:#e5e7eb; --text-dim:#9ca3af; --primary:#0ea5e9; --accent:#22c55e; --danger:#ef4444; --warning:#f59e0b; --radius:18px; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; background:linear-gradient(180deg,#0b1220,#0f172a); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;}
+    .app{display:grid; grid-template-columns:320px 1fr; height:100%;}
+    @media (max-width: 840px){ .app{grid-template-columns:1fr} .sidebar{position:sticky; top:0; z-index:3} }
+    .sidebar{padding:16px; background:rgba(17,24,39,.7); backdrop-filter: blur(10px); border-right:1px solid rgba(255,255,255,.06)}
+    .brand{display:flex; align-items:center; gap:12px;}
+    .brand .logo{width:36px; height:36px; border-radius:12px; background:radial-gradient(circle at 30% 30%, #38bdf8, #0ea5e9 60%, #0369a1); box-shadow:0 10px 30px rgba(14,165,233,.4)}
+    .brand h1{font-size:18px; margin:0}
+    .section-title{display:flex; justify-content:space-between; align-items:center; margin:18px 0 8px; color:var(--text-dim); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+    .row{display:flex; gap:8px}
+    .input{flex:1; background:var(--muted); color:var(--text); border:1px solid rgba(255,255,255,.06); padding:12px 14px; border-radius:12px; outline:none}
+    .num-input{width:80px; background:var(--muted); color:var(--text); border:1px solid rgba(255,255,255,.06); padding:12px 14px; border-radius:12px; outline:none;}
+    .btn{background:var(--primary); color:white; border:none; padding:12px 14px; border-radius:12px; cursor:pointer; font-weight:600}
+    .btn.secondary{background:#334155}
+    .btn.danger{background:var(--danger)}
+    .btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.12)}
+    .bag-list{display:flex; flex-direction:column; gap:8px; max-height:45vh; overflow:auto; padding-right:4px}
+    .bag{display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); padding:12px; border-radius:12px; cursor:pointer}
+    .bag.active{outline:2px solid var(--primary); background:rgba(14,165,233,.08)}
+    .bag .meta{display:flex; align-items:center; gap:10px;}
+    .bag .meta .dot{width:10px; height:10px; border-radius:50%; background:var(--primary); box-shadow:0 0 0 4px rgba(14,165,233,.18)}
+    .bag .name{font-weight:600}
+    .bag .count{color:var(--text-dim); font-size:12px}
+    .main{padding:20px;}
+    .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between}
+    .stats{display:flex; gap:10px; align-items:center; color:var(--text-dim)}
+    .stats .pill{background:rgba(255,255,255,.06); padding:8px 10px; border-radius:999px}
+    .card{margin-top:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); overflow:hidden}
+    .card h3{margin:0; padding:14px 16px; font-size:14px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-dim); background:rgba(0,0,0,.18)}
+    .card .content{padding:14px}
+    .item-list{display:flex; flex-direction:column; gap:8px}
+    .item{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); padding:10px 12px; border-radius:12px}
+    .item input[type="checkbox"]{width:18px; height:18px}
+    .item .label{flex:1}
+    .item .qty{font-size:13px; color:var(--text-dim); margin-left:6px}
+    .item.packed .label{text-decoration:line-through; color:var(--text-dim)}
+    .item .actions{display:flex; gap:6px}
+    .footer{padding:14px; color:var(--text-dim); font-size:12px; text-align:center}
+    a.link{color:#7dd3fc; text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Travel Bag Tracker</h1>
+      </div>
+      <div class="section-title"><span>Your Bags</span>
+        <div class="row">
+          <button class="btn ghost" id="exportBtn">Export</button>
+          <label class="btn ghost">Import <input type="file" id="importFile" accept="application/json" hidden /></label>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <input id="bagName" class="input" placeholder="e.g. Suitcase" />
+        <button id="addBagBtn" class="btn">Add Bag</button>
+      </div>
+      <div class="bag-list" id="bagList"></div>
+      <div class="footer">Data is stored locally on your device.</div>
+    </aside>
+    <main class="main">
+      <div class="toolbar">
+        <div>
+          <h2 id="currentBagName" style="margin:0 0 6px 0">No bag selected</h2>
+          <div class="stats">
+            <span class="pill" id="statTotal">0 items</span>
+            <span class="pill" id="statPieces">0 pieces</span>
+            <span class="pill" id="statPacked">0 packed</span>
+            <span class="pill" id="statRemain">0 remaining</span>
+          </div>
+        </div>
+        <div class="row">
+          <button id="renameBagBtn" class="btn secondary" disabled>Rename</button>
+          <button id="clearPackedBtn" class="btn secondary" disabled>Clear Packed</button>
+          <button id="deleteBagBtn" class="btn danger" disabled>Delete Bag</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Add Items</h3>
+        <div class="content">
+          <div class="row">
+            <input id="itemName" class="input" placeholder="e.g. T-shirt" />
+            <input id="itemQty" type="number" class="num-input" placeholder="Qty" min="1" value="1" />
+            <button id="addItemBtn" class="btn">Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Items in Bag</h3>
+        <div class="content">
+          <div id="itemList" class="item-list"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    const STORAGE_KEY='bagtracker.v3';
+    const $=(s)=>document.querySelector(s);
+    let state=load();
+    let selectedBagId=state.bags[0]?.id||null;
+    function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{bags:[]}}catch{return{bags:[]}}}
+    function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+    const uid=()=>Math.random().toString(36).slice(2,10);
+    function bagById(id){return state.bags.find(b=>b.id===id)||null;}
+    function piecesOf(b){return b.items.reduce((s,i)=>s+(parseInt(i.qty)||1),0)}
+
+    function render(){
+      const bagList=$('#bagList');
+      bagList.innerHTML='';
+      if(state.bags.length===0){bagList.innerHTML='<div style="color:var(--text-dim);padding:8px 2px">No bags yet. Add one above.</div>'}
+      state.bags.forEach(b=>{
+        const el=document.createElement('div');
+        el.className='bag'+(b.id===selectedBagId?' active':'');
+        const total=b.items.length; const packed=b.items.filter(i=>i.packed).length; const pcs=piecesOf(b);
+        el.innerHTML=`<div class="meta"><div class="dot"></div><div><div class="name">${escapeHtml(b.name)}</div><div class="count">${packed}/${total} packed • ${pcs} pcs</div></div></div><div style="display:flex;gap:6px"><button class="btn ghost" data-act="select">Open</button></div>`;
+        el.querySelector('[data-act="select"]').onclick=()=>{selectedBagId=b.id;render();};
+        el.onclick=(e)=>{if(e.target.dataset.act!=='select'){selectedBagId=b.id;render();}};
+        bagList.appendChild(el);
+      });
+
+      const nameEl=$('#currentBagName');
+      const itemList=$('#itemList');
+      const renameBtn=$('#renameBagBtn');
+      const delBtn=$('#deleteBagBtn');
+      const clearBtn=$('#clearPackedBtn');
+      const bag=bagById(selectedBagId);
+      if(!bag){
+        nameEl.textContent='No bag selected';
+        $('#statTotal').textContent='0 items';
+        $('#statPieces').textContent='0 pieces';
+        $('#statPacked').textContent='0 packed';
+        $('#statRemain').textContent='0 remaining';
+        itemList.innerHTML='';
+        [renameBtn,delBtn,clearBtn,$('#addItemBtn')].forEach(b=>b.disabled=true);
+        return;
+      }
+      [renameBtn,delBtn,clearBtn,$('#addItemBtn')].forEach(b=>b.disabled=false);
+      nameEl.textContent=bag.name;
+      const total=bag.items.length; const packed=bag.items.filter(i=>i.packed).length; const pcs=piecesOf(bag);
+      $('#statTotal').textContent=`${total} ${total===1?'item':'items'}`;
+      $('#statPieces').textContent=`${pcs} ${pcs===1?'piece':'pieces'}`;
+      $('#statPacked').textContent=`${packed} packed`;
+      $('#statRemain').textContent=`${Math.max(0,total-packed)} remaining`;
+
+      itemList.innerHTML='';
+      if(bag.items.length===0){itemList.innerHTML='<div style="color:var(--text-dim)">No items yet. Add your first item.</div>'}
+      bag.items.forEach(item=>{
+        const el=document.createElement('div');
+        el.className='item'+(item.packed?' packed':'');
+        el.innerHTML=`<input type="checkbox" ${item.packed?'checked':''} /><div class="label">${escapeHtml(item.name)}<span class="qty">×${item.qty||1}</span></div><div class="actions"><button class="btn ghost" data-act="edit">Edit</button><button class="btn ghost" data-act="del">Delete</button></div>`;
+        el.querySelector('input').onchange=()=>{item.packed=!item.packed;save();render();};
+        el.querySelector('[data-act="edit"]').onclick=()=>{
+          const newName=prompt('Edit item name:',item.name);
+          const newQty=parseInt(prompt('Edit quantity:',item.qty||1));
+          if(newName&&newName.trim()){
+            item.name=newName.trim();
+            item.qty=isNaN(newQty)||newQty<1?1:newQty;
+            save();render();
+          }
+        };
+        el.querySelector('[data-act="del"]').onclick=()=>{if(confirm('Delete this item?')){bag.items=bag.items.filter(i=>i.id!==item.id); save(); render();}};
+        itemList.appendChild(el);
+      });
+    }
+
+    function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
+    $('#addBagBtn').onclick=()=>{const name=$('#bagName').value.trim(); if(!name)return alert('Enter a bag name'); const bag={id:uid(),name,items:[]}; state.bags.push(bag); save(); selectedBagId=bag.id; $('#bagName').value=''; render();};
+    $('#addItemBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; const name=$('#itemName').value.trim(); const qty=parseInt($('#itemQty').value)||1; if(!name)return alert('Enter an item name'); bag.items.push({id:uid(),name,qty,packed:false}); $('#itemName').value=''; $('#itemQty').value='1'; save(); render();};
+    $('#deleteBagBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; if(confirm(`Delete bag "${bag.name}" and all its items?`)){state.bags=state.bags.filter(b=>b.id!==bag.id); save(); selectedBagId=state.bags[0]?.id||null; render();}};
+    $('#renameBagBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; const newName=prompt('New bag name:',bag.name); if(newName&&newName.trim()){bag.name=newName.trim(); save(); render();}};
+    $('#clearPackedBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; if(confirm('Remove all packed items from this bag?')){bag.items=bag.items.filter(i=>!i.packed); save(); render();}};
+    $('#exportBtn').onclick=()=>{const data=JSON.stringify(state,null,2); const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='bag-tracker-backup.json'; a.click(); URL.revokeObjectURL(url);};
+    $('#importFile').addEventListener('change',async(e)=>{const file=e.target.files?.[0]; if(!file)return; try{const text=await file.text(); const json=JSON.parse(text); if(!json||!Array.isArray(json.bags)) throw new Error('Invalid file'); state=json; save(); selectedBagId=state.bags[0]?.id||null; render(); alert('Imported successfully!');}catch(err){alert('Failed to import: '+err.message);}finally{e.target.value='';}});
+    $('#bagName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addBagBtn').click();});
+    $('#itemName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addItemBtn').click();});
+    $('#itemQty').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addItemBtn').click();});
+    render();
+  </script>
+</body>
+</html>
