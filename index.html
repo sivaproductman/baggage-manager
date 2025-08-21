@@ -11,9 +11,10 @@
     html,body{height:100%}
     body{margin:0; background:linear-gradient(180deg,#0b1220,#0f172a); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;}
     .app{display:grid; grid-template-columns:320px 1fr; height:100%;}
-    @media (max-width: 840px){ .app{grid-template-columns:1fr} .sidebar{position:sticky; top:0; z-index:3} }
+    @media (max-width: 980px){ .app{grid-template-columns:1fr} .sidebar{position:sticky; top:0; z-index:3} }
     .sidebar{padding:16px; background:rgba(17,24,39,.7); backdrop-filter: blur(10px); border-right:1px solid rgba(255,255,255,.06)}
-    .brand{display:flex; align-items:center; gap:12px;}
+    .brand{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+    .brand-left{display:flex; align-items:center; gap:12px}
     .brand .logo{width:36px; height:36px; border-radius:12px; background:radial-gradient(circle at 30% 30%, #38bdf8, #0ea5e9 60%, #0369a1); box-shadow:0 10px 30px rgba(14,165,233,.4)}
     .brand h1{font-size:18px; margin:0}
     .section-title{display:flex; justify-content:space-between; align-items:center; margin:18px 0 8px; color:var(--text-dim); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
@@ -24,20 +25,31 @@
     .btn.secondary{background:#334155}
     .btn.danger{background:var(--danger)}
     .btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.12)}
-    .bag-list{display:flex; flex-direction:column; gap:8px; max-height:45vh; overflow:auto; padding-right:4px}
+
+    .pill{background:rgba(255,255,255,.06); padding:8px 10px; border-radius:999px; color:var(--text-dim); font-size:12px}
+
+    .trip-list{display:flex; flex-direction:column; gap:8px; max-height:30vh; overflow:auto; padding-right:4px}
+    .trip{display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); padding:12px; border-radius:12px; cursor:pointer}
+    .trip.active{outline:2px solid var(--primary); background:rgba(14,165,233,.08)}
+    .trip .name{font-weight:600}
+    .trip .sub{color:var(--text-dim); font-size:12px}
+
+    .bag-list{display:flex; flex-direction:column; gap:8px; max-height:35vh; overflow:auto; padding-right:4px}
     .bag{display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); padding:12px; border-radius:12px; cursor:pointer}
     .bag.active{outline:2px solid var(--primary); background:rgba(14,165,233,.08)}
     .bag .meta{display:flex; align-items:center; gap:10px;}
     .bag .meta .dot{width:10px; height:10px; border-radius:50%; background:var(--primary); box-shadow:0 0 0 4px rgba(14,165,233,.18)}
     .bag .name{font-weight:600}
     .bag .count{color:var(--text-dim); font-size:12px}
+
     .main{padding:20px;}
     .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between}
     .stats{display:flex; gap:10px; align-items:center; color:var(--text-dim)}
-    .stats .pill{background:rgba(255,255,255,.06); padding:8px 10px; border-radius:999px}
+
     .card{margin-top:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); overflow:hidden}
     .card h3{margin:0; padding:14px 16px; font-size:14px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-dim); background:rgba(0,0,0,.18)}
     .card .content{padding:14px}
+
     .item-list{display:flex; flex-direction:column; gap:8px}
     .item{display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); padding:10px 12px; border-radius:12px}
     .item input[type="checkbox"]{width:18px; height:18px}
@@ -45,35 +57,54 @@
     .item .qty{font-size:13px; color:var(--text-dim); margin-left:6px}
     .item.packed .label{text-decoration:line-through; color:var(--text-dim)}
     .item .actions{display:flex; gap:6px}
+
+    .share{display:flex; gap:8px; align-items:center}
+    .presence{display:flex; align-items:center; gap:6px}
+    .avatar{width:24px; height:24px; border-radius:999px; background:#334155; display:flex; align-items:center; justify-content:center; font-size:12px; color:#cbd5e1; border:1px solid rgba(255,255,255,.12)}
+
     .footer{padding:14px; color:var(--text-dim); font-size:12px; text-align:center}
-    a.link{color:#7dd3fc; text-decoration:none}
   </style>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="logo"></div>
-        <h1>Travel Baggage Manager</h1>
-      </div>
-      <div class="section-title"><span>Your Bags</span>
+        <div class="brand-left">
+          <div class="logo"></div>
+          <h1>Travel Baggage Manager</h1>
+        </div>
         <div class="row">
-          <button class="btn ghost" id="exportBtn">Export</button>
-          <label class="btn ghost">Import <input type="file" id="importFile" accept="application/json" hidden /></label>
+          <input id="displayName" class="input" placeholder="Your name" style="max-width:160px"/>
+          <button id="saveNameBtn" class="btn secondary">Save</button>
         </div>
       </div>
-      <div class="row" style="margin-bottom:10px">
-        <input id="bagName" class="input" placeholder="e.g. Suitcase" />
-        <button id="addBagBtn" class="btn">Add Bag</button>
+
+      <div class="section-title"><span>Your Trips</span>
+        <div class="row">
+          <button id="newTripBtn" class="btn">New Trip</button>
+        </div>
       </div>
+
+      <div class="trip-list" id="tripList"></div>
+
+      <div class="section-title"><span>Bags in Trip</span>
+        <div class="row">
+          <input id="bagName" class="input" placeholder="e.g. Suitcase" />
+          <button id="addBagBtn" class="btn">Add Bag</button>
+        </div>
+      </div>
+
       <div class="bag-list" id="bagList"></div>
-      <div class="footer">Data is stored locally on your device.</div>
+
+      <div class="footer">Realtime collaboration via Firebase. Data synced to your account.</div>
     </aside>
+
     <main class="main">
       <div class="toolbar">
         <div>
-          <h2 id="currentBagName" style="margin:0 0 6px 0">No bag selected</h2>
+          <h2 id="currentTripTitle" style="margin:0 0 6px 0">No trip selected</h2>
           <div class="stats">
+            <span class="pill" id="statTrip">0 bags</span>
             <span class="pill" id="statTotal">0 items</span>
             <span class="pill" id="statPieces">0 pieces</span>
             <span class="pill" id="statPacked">0 packed</span>
@@ -81,13 +112,17 @@
           </div>
         </div>
         <div class="row">
-          <button id="renameBagBtn" class="btn secondary" disabled>Rename</button>
-          <button id="clearPackedBtn" class="btn secondary" disabled>Clear Packed</button>
-          <button id="deleteBagBtn" class="btn danger" disabled>Delete Bag</button>
+          <div class="share">
+            <button id="shareBtn" class="btn secondary" disabled>Share Trip</button>
+            <input id="shareLink" class="input" style="max-width:360px" placeholder="Share link" readonly />
+            <button id="copyShareBtn" class="btn ghost">Copy</button>
+          </div>
+          <div class="presence" id="presenceBar"></div>
         </div>
       </div>
+
       <div class="card">
-        <h3>Add Items</h3>
+        <h3>Add Items to Selected Bag</h3>
         <div class="content">
           <div class="row">
             <input id="itemName" class="input" placeholder="e.g. T-shirt" />
@@ -96,6 +131,7 @@
           </div>
         </div>
       </div>
+
       <div class="card" style="margin-top:14px">
         <h3>Items in Bag</h3>
         <div class="content">
@@ -104,88 +140,441 @@
       </div>
     </main>
   </div>
-  <script>
-    const STORAGE_KEY='bagtracker.v3';
-    const $=(s)=>document.querySelector(s);
-    let state=load();
-    let selectedBagId=state.bags[0]?.id||null;
-    function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{bags:[]}}catch{return{bags:[]}}}
-    function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
-    const uid=()=>Math.random().toString(36).slice(2,10);
-    function bagById(id){return state.bags.find(b=>b.id===id)||null;}
-    function piecesOf(b){return b.items.reduce((s,i)=>s+(parseInt(i.qty)||1),0)}
 
-    function render(){
-      const bagList=$('#bagList');
-      bagList.innerHTML='';
-      if(state.bags.length===0){bagList.innerHTML='<div style="color:var(--text-dim);padding:8px 2px">No bags yet. Add one above.</div>'}
-      state.bags.forEach(b=>{
-        const el=document.createElement('div');
-        el.className='bag'+(b.id===selectedBagId?' active':'');
-        const total=b.items.length; const packed=b.items.filter(i=>i.packed).length; const pcs=piecesOf(b);
-        el.innerHTML=`<div class="meta"><div class="dot"></div><div><div class="name">${escapeHtml(b.name)}</div><div class="count">${packed}/${total} packed • ${pcs} pcs</div></div></div><div style="display:flex;gap:6px"><button class="btn ghost" data-act="select">Open</button></div>`;
-        el.querySelector('[data-act="select"]').onclick=()=>{selectedBagId=b.id;render();};
-        el.onclick=(e)=>{if(e.target.dataset.act!=='select'){selectedBagId=b.id;render();}};
-        bagList.appendChild(el);
-      });
+  <!-- Firebase security rules (copy into Firestore Rules tab):
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      function isSignedIn() { return request.auth != null; }
+      function tripDoc(tripId) { return get(/databases/$(database)/documents/trips/$(tripId)); }
+      function isOwner(tripId) { return isSignedIn() && tripDoc(tripId).data.ownerUid == request.auth.uid; }
+      function isMember(tripId) {
+        return isSignedIn() && exists(/databases/$(database)/documents/trips/$(tripId)/members/$(request.auth.uid));
+      }
 
-      const nameEl=$('#currentBagName');
-      const itemList=$('#itemList');
-      const renameBtn=$('#renameBagBtn');
-      const delBtn=$('#deleteBagBtn');
-      const clearBtn=$('#clearPackedBtn');
-      const bag=bagById(selectedBagId);
-      if(!bag){
-        nameEl.textContent='No bag selected';
-        $('#statTotal').textContent='0 items';
-        $('#statPieces').textContent='0 pieces';
-        $('#statPacked').textContent='0 packed';
-        $('#statRemain').textContent='0 remaining';
-        itemList.innerHTML='';
-        [renameBtn,delBtn,clearBtn,$('#addItemBtn')].forEach(b=>b.disabled=true);
+      match /trips/{tripId} {
+        allow create: if isSignedIn();
+        allow read: if isOwner(tripId) || isMember(tripId);
+        allow update, delete: if isOwner(tripId);
+
+        match /members/{uid} {
+          // Join requires correct shareKey on create; user can only create their own membership
+          allow create: if request.auth.uid == uid &&
+            get(/databases/$(database)/documents/trips/$(tripId)).data.shareKey == request.resource.data.shareKey;
+          allow read: if isOwner(tripId) || isMember(tripId);
+          allow delete: if request.auth.uid == uid || isOwner(tripId);
+          allow update: if false; // no updates in MVP
+        }
+
+        match /bags/{bagId} {
+          allow read: if isOwner(tripId) || isMember(tripId);
+          allow create, update, delete: if isOwner(tripId) || isMember(tripId);
+
+          match /items/{itemId} {
+            allow read: if isOwner(tripId) || isMember(tripId);
+            allow create, update, delete: if isOwner(tripId) || isMember(tripId);
+          }
+        }
+
+        match /presence/{uid} {
+          allow read: if isOwner(tripId) || isMember(tripId);
+          allow create, update: if request.auth.uid == uid && (isOwner(tripId) || isMember(tripId));
+          allow delete: if request.auth.uid == uid || isOwner(tripId);
+        }
+      }
+    }
+  }
+  -->
+
+  <script type="module">
+    // ===== 1) Firebase INIT =====
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { getFirestore, collection, collectionGroup, doc, addDoc, setDoc, getDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // TODO: paste your Firebase config here (Firebase Console → Project Settings → SDK setup & config)
+const firebaseConfig = {
+  apiKey: "AIzaSyCEGmZAncKp4Uqi7mHEo0iw8-wbtjUFTF4",
+  authDomain: "travel-baggage-manager-collab.firebaseapp.com",
+  projectId: "travel-baggage-manager-collab",
+  storageBucket: "travel-baggage-manager-collab.firebasestorage.app",
+  messagingSenderId: "272994190743",
+  appId: "1:272994190743:web:58f3e26d732f40b7c9b0d2",
+  measurementId: "G-VV8LMREZS6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ===== 2) State =====
+    const $ = sel => document.querySelector(sel);
+    let currentUser = null;
+    let currentTripId = null;
+    let selectedBagId = null;
+
+    let unsubscribeTripsOwned = null;
+    let unsubscribeTripsJoined = null;
+    let unsubscribeBags = null;
+    let unsubscribeItems = null;
+    let unsubscribePresence = null;
+
+    // ===== 3) Helpers =====
+    const uid = () => Math.random().toString(36).slice(2, 10);
+    const escapeHtml = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'}[c]));
+
+    function piecesOfItems(items){
+      return items.reduce((sum, it) => sum + (parseInt(it.qty)||1), 0);
+    }
+
+    function setStats({bags, items}){
+      const totalItems = items.length;
+      const packed = items.filter(i=>i.packed).length;
+      const pcs = piecesOfItems(items);
+      $('#statTrip').textContent = `${bags.length} ${bags.length===1?'bag':'bags'}`;
+      $('#statTotal').textContent = `${totalItems} ${totalItems===1?'item':'items'}`;
+      $('#statPieces').textContent = `${pcs} ${pcs===1?'piece':'pieces'}`;
+      $('#statPacked').textContent = `${packed} packed`;
+      $('#statRemain').textContent = `${Math.max(0,totalItems-packed)} remaining`;
+    }
+
+    function renderTripsList(trips){
+      const list = $('#tripList');
+      list.innerHTML = '';
+      if (trips.length === 0) {
+        list.innerHTML = `<div style="color:var(--text-dim);padding:8px 2px">No trips yet. Click New Trip.</div>`;
         return;
       }
-      [renameBtn,delBtn,clearBtn,$('#addItemBtn')].forEach(b=>b.disabled=false);
-      nameEl.textContent=bag.name;
-      const total=bag.items.length; const packed=bag.items.filter(i=>i.packed).length; const pcs=piecesOf(bag);
-      $('#statTotal').textContent=`${total} ${total===1?'item':'items'}`;
-      $('#statPieces').textContent=`${pcs} ${pcs===1?'piece':'pieces'}`;
-      $('#statPacked').textContent=`${packed} packed`;
-      $('#statRemain').textContent=`${Math.max(0,total-packed)} remaining`;
-
-      itemList.innerHTML='';
-      if(bag.items.length===0){itemList.innerHTML='<div style="color:var(--text-dim)">No items yet. Add your first item.</div>'}
-      bag.items.forEach(item=>{
-        const el=document.createElement('div');
-        el.className='item'+(item.packed?' packed':'');
-        el.innerHTML=`<input type="checkbox" ${item.packed?'checked':''} /><div class="label">${escapeHtml(item.name)}<span class="qty">×${item.qty||1}</span></div><div class="actions"><button class="btn ghost" data-act="edit">Edit</button><button class="btn ghost" data-act="del">Delete</button></div>`;
-        el.querySelector('input').onchange=()=>{item.packed=!item.packed;save();render();};
-        el.querySelector('[data-act="edit"]').onclick=()=>{
-          const newName=prompt('Edit item name:',item.name);
-          const newQty=parseInt(prompt('Edit quantity:',item.qty||1));
-          if(newName&&newName.trim()){
-            item.name=newName.trim();
-            item.qty=isNaN(newQty)||newQty<1?1:newQty;
-            save();render();
-          }
-        };
-        el.querySelector('[data-act="del"]').onclick=()=>{if(confirm('Delete this item?')){bag.items=bag.items.filter(i=>i.id!==item.id); save(); render();}};
-        itemList.appendChild(el);
+      trips.forEach(t =>{
+        const el = document.createElement('div');
+        el.className = 'trip' + (t.id===currentTripId ? ' active':'' );
+        el.innerHTML = `
+          <div>
+            <div class="name">${escapeHtml(t.title||'Untitled Trip')}</div>
+            <div class="sub">Owner: ${t.ownerUid===currentUser?.uid? 'You' : (t.ownerUid?.slice(0,6)+'…')}</div>
+          </div>
+          <div class="row">
+            <button class="btn ghost" data-act="open">Open</button>
+          </div>`;
+        el.querySelector('[data-act="open"]').onclick = ()=> openTrip(t.id);
+        list.appendChild(el);
       });
     }
 
-    function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
-    $('#addBagBtn').onclick=()=>{const name=$('#bagName').value.trim(); if(!name)return alert('Enter a bag name'); const bag={id:uid(),name,items:[]}; state.bags.push(bag); save(); selectedBagId=bag.id; $('#bagName').value=''; render();};
-    $('#addItemBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; const name=$('#itemName').value.trim(); const qty=parseInt($('#itemQty').value)||1; if(!name)return alert('Enter an item name'); bag.items.push({id:uid(),name,qty,packed:false}); $('#itemName').value=''; $('#itemQty').value='1'; save(); render();};
-    $('#deleteBagBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; if(confirm(`Delete bag "${bag.name}" and all its items?`)){state.bags=state.bags.filter(b=>b.id!==bag.id); save(); selectedBagId=state.bags[0]?.id||null; render();}};
-    $('#renameBagBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; const newName=prompt('New bag name:',bag.name); if(newName&&newName.trim()){bag.name=newName.trim(); save(); render();}};
-    $('#clearPackedBtn').onclick=()=>{const bag=bagById(selectedBagId); if(!bag)return; if(confirm('Remove all packed items from this bag?')){bag.items=bag.items.filter(i=>!i.packed); save(); render();}};
-    $('#exportBtn').onclick=()=>{const data=JSON.stringify(state,null,2); const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='bag-tracker-backup.json'; a.click(); URL.revokeObjectURL(url);};
-    $('#importFile').addEventListener('change',async(e)=>{const file=e.target.files?.[0]; if(!file)return; try{const text=await file.text(); const json=JSON.parse(text); if(!json||!Array.isArray(json.bags)) throw new Error('Invalid file'); state=json; save(); selectedBagId=state.bags[0]?.id||null; render(); alert('Imported successfully!');}catch(err){alert('Failed to import: '+err.message);}finally{e.target.value='';}});
-    $('#bagName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addBagBtn').click();});
-    $('#itemName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addItemBtn').click();});
-    $('#itemQty').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addItemBtn').click();});
-    render();
+    function renderBagsList(bags){
+      const list = $('#bagList');
+      list.innerHTML = '';
+      if (bags.length === 0) {
+        list.innerHTML = `<div style="color:var(--text-dim);padding:8px 2px">No bags yet. Add one above.</div>`;
+        return;
+      }
+      bags.forEach(b =>{
+        const el = document.createElement('div');
+        el.className = 'bag' + (b.id===selectedBagId ? ' active':'' );
+        el.innerHTML = `
+          <div class="meta"><div class="dot"></div>
+            <div>
+              <div class="name">${escapeHtml(b.name)}</div>
+              <div class="count" data-id="${b.id}">loading…</div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn ghost" data-act="open">Open</button>
+            <button class="btn ghost" data-act="rename">Rename</button>
+            <button class="btn ghost" data-act="del">Delete</button>
+          </div>`;
+        el.querySelector('[data-act="open"]').onclick = ()=>{ selectedBagId=b.id; loadItems(); };
+        el.querySelector('[data-act="rename"]').onclick = async ()=>{
+          const newName = prompt('New bag name:', b.name);
+          if(newName && newName.trim()){
+            await updateDoc(doc(db, 'trips', currentTripId, 'bags', b.id), { name: newName.trim() });
+          }
+        };
+        el.querySelector('[data-act="del"]').onclick = async ()=>{
+          if(confirm('Delete this bag and all its items?')){
+            await deleteDoc(doc(db, 'trips', currentTripId, 'bags', b.id));
+          }
+        };
+        list.appendChild(el);
+      });
+    }
+
+    function renderItemsList(items){
+      const list = $('#itemList');
+      list.innerHTML = '';
+      if(items.length===0){ list.innerHTML = `<div style="color:var(--text-dim)">No items yet. Add your first item.</div>`; }
+      items.forEach(it =>{
+        const el = document.createElement('div');
+        el.className = 'item' + (it.packed ? ' packed' : '');
+        el.innerHTML = `
+          <input type="checkbox" ${it.packed? 'checked':''} />
+          <div class="label">${escapeHtml(it.name)}<span class="qty">×${it.qty||1}</span></div>
+          <div class="actions">
+            <button class="btn ghost" data-act="edit">Edit</button>
+            <button class="btn ghost" data-act="del">Delete</button>
+          </div>`;
+        el.querySelector('input').onchange = async ()=>{
+          await updateDoc(doc(db, 'trips', currentTripId, 'bags', selectedBagId, 'items', it.id), {
+            packed: !it.packed,
+            updatedAt: serverTimestamp(),
+            updatedByUid: currentUser?.uid || null,
+            updatedByName: localStorage.getItem('displayName') || 'Anon'
+          });
+        };
+        el.querySelector('[data-act="edit"]').onclick = async ()=>{
+          const newName = prompt('Edit item name:', it.name);
+          const newQty = parseInt(prompt('Edit quantity:', it.qty||1));
+          if(newName && newName.trim()){
+            await updateDoc(doc(db, 'trips', currentTripId, 'bags', selectedBagId, 'items', it.id), {
+              name: newName.trim(),
+              qty: isNaN(newQty)||newQty<1?1:newQty,
+              updatedAt: serverTimestamp(),
+              updatedByUid: currentUser?.uid || null,
+              updatedByName: localStorage.getItem('displayName') || 'Anon'
+            });
+          }
+        };
+        el.querySelector('[data-act="del"]').onclick = async ()=>{
+          if(confirm('Delete this item?')){
+            await deleteDoc(doc(db, 'trips', currentTripId, 'bags', selectedBagId, 'items', it.id));
+          }
+        };
+        list.appendChild(el);
+      });
+    }
+
+    function renderPresence(list){
+      const bar = $('#presenceBar');
+      bar.innerHTML = '';
+      list.forEach(p =>{
+        const el = document.createElement('div');
+        const name = (p.displayName||'Anon');
+        const initials = name.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase();
+        el.className = 'avatar';
+        el.title = `${name}`;
+        el.textContent = initials || 'U';
+        bar.appendChild(el);
+      });
+    }
+
+    function setShareLink(trip){
+      const link = `${location.origin}${location.pathname}?t=${trip.id}&k=${trip.shareKey}`;
+      $('#shareLink').value = link;
+    }
+
+    // ===== 4) Auth and bootstrap =====
+    onAuthStateChanged(auth, async (user) => {
+      if(user){
+        currentUser = user;
+        const name = localStorage.getItem('displayName') || '';
+        $('#displayName').value = name;
+        await bootstrapFromUrl();
+        loadTrips();
+      } else {
+        await signInAnonymously(auth);
+      }
+    });
+
+    $('#saveNameBtn').onclick = ()=>{
+      const name = $('#displayName').value.trim();
+      localStorage.setItem('displayName', name || '');
+      alert('Saved!');
+    };
+
+    async function bootstrapFromUrl(){
+      const params = new URLSearchParams(location.search);
+      const t = params.get('t');
+      const k = params.get('k');
+      if(t && k){
+        // Try to join trip with share key
+        try{
+          await setDoc(doc(db, 'trips', t, 'members', currentUser.uid), {
+            uid: currentUser.uid,
+            role: 'editor',
+            joinedAt: serverTimestamp(),
+            shareKey: k
+          });
+          currentTripId = t; selectedBagId = null; loadBags();
+        }catch(err){ console.error('Join failed', err); alert('Could not join trip. Link may be invalid or expired.'); }
+      }
+    }
+
+    // ===== 5) Trips CRUD & listeners =====
+    $('#newTripBtn').onclick = async ()=>{
+      const title = prompt('Trip title (e.g., Goa weekend)?','My Trip');
+      if(!title) return;
+      const shareKey = uid()+uid(); // 16 chars
+      const docRef = await addDoc(collection(db, 'trips'), {
+        title: title.trim(),
+        ownerUid: currentUser?.uid || null,
+        shareKey,
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+      });
+      currentTripId = docRef.id;
+      // Owner can open trip immediately
+      loadBags();
+      const snap = await getDoc(docRef);
+      setShareLink({ id: docRef.id, ...snap.data() });
+      $('#shareBtn').disabled = false;
+    };
+
+    function loadTrips(){
+      // Owned trips
+      if(unsubscribeTripsOwned) unsubscribeTripsOwned();
+      const qOwned = query(collection(db, 'trips'), where('ownerUid','==', currentUser?.uid||''), orderBy('createdAt','desc'));
+      unsubscribeTripsOwned = onSnapshot(qOwned, (snap)=>{
+        const owned = snap.docs.map(d=>({id:d.id, ...d.data()}));
+        renderTripsList(mergeTrips(owned, lastJoinedCache));
+      });
+
+      // Joined trips via collectionGroup on members
+      if(unsubscribeTripsJoined) unsubscribeTripsJoined();
+      const qJoined = query(collectionGroup(db, 'members'), where('uid','==', currentUser?.uid||''));
+      unsubscribeTripsJoined = onSnapshot(qJoined, async (snap)=>{
+        const tripIds = [...new Set(snap.docs.map(d=> d.ref.parent.parent.id ))];
+        const trips = [];
+        for(const id of tripIds){
+          const t = await getDoc(doc(db,'trips',id));
+          if(t.exists()) trips.push({id, ...t.data()});
+        }
+        lastJoinedCache = trips;
+        const owned = lastOwnedCache || [];
+        renderTripsList(mergeTrips(owned, trips));
+      });
+    }
+
+    let lastOwnedCache = [];
+    let lastJoinedCache = [];
+    function mergeTrips(a,b){
+      const map = new Map();
+      a.forEach(t=>map.set(t.id,t));
+      b.forEach(t=>map.set(t.id,t));
+      const merged = Array.from(map.values());
+      lastOwnedCache = a; // keep caches for re-render
+      return merged.sort((x,y)=>(y.createdAt?.seconds||0)-(x.createdAt?.seconds||0));
+    }
+
+    async function openTrip(id){
+      currentTripId = id; selectedBagId = null; loadBags();
+      const t = await getDoc(doc(db,'trips',id));
+      if(t.exists()){
+        $('#currentTripTitle').textContent = t.data().title || 'Trip';
+        setShareLink({ id, ...t.data() });
+        $('#shareBtn').disabled = false;
+      }
+    }
+
+    $('#copyShareBtn').onclick = ()=>{
+      const v = $('#shareLink').value; if(!v) return; navigator.clipboard.writeText(v); alert('Share link copied!');
+    };
+
+    $('#shareBtn').onclick = async ()=>{
+      if(!currentTripId) return;
+      const t = await getDoc(doc(db, 'trips', currentTripId));
+      if(t.exists()) setShareLink({ id: currentTripId, ...t.data() });
+      alert('Anyone with this link can view & edit. You can rotate the link later by recreating the trip (MVP).');
+    };
+
+    // ===== 6) Bags & Items =====
+    $('#addBagBtn').onclick = async ()=>{
+      if(!currentTripId) return alert('Select or create a trip first.');
+      const name = $('#bagName').value.trim();
+      if(!name) return alert('Enter a bag name');
+      await addDoc(collection(db, 'trips', currentTripId, 'bags'), { name, order: Date.now() });
+      $('#bagName').value='';
+    };
+
+    async function loadBags(){
+      if(unsubscribeBags) unsubscribeBags();
+      if(unsubscribePresence) unsubscribePresence();
+
+      if(!currentTripId){
+        $('#currentTripTitle').textContent = 'No trip selected';
+        renderBagsList([]); renderItemsList([]); setStats({bags:[], items:[]});
+        $('#shareBtn').disabled = true; $('#shareLink').value = '';
+        return;
+      }
+
+      const qBags = query(collection(db, 'trips', currentTripId, 'bags'), orderBy('order','asc'));
+      unsubscribeBags = onSnapshot(qBags, async (snap)=>{
+        const bags = snap.docs.map(d=>({id:d.id, ...d.data()}));
+        renderBagsList(bags);
+        // update bag counts (pcs) by reading items count per bag
+        for(const b of bags){
+          const itemsSnap = await getDocs(collection(db,'trips',currentTripId,'bags',b.id,'items'));
+          const items = itemsSnap.docs.map(d=>d.data());
+          const pcs = piecesOfItems(items);
+          const countEl = document.querySelector(`.count[data-id="${b.id}"]`);
+          if(countEl) countEl.textContent = `${items.filter(i=>i.packed).length}/${items.length} packed • ${pcs} pcs`;
+        }
+        // auto-open first bag if none selected
+        if(!selectedBagId && bags[0]){ selectedBagId = bags[0].id; loadItems(); }
+      });
+
+      // Presence listener
+      const presCol = collection(db, 'trips', currentTripId, 'presence');
+      unsubscribePresence = onSnapshot(presCol, (snap)=>{
+        const now = Date.now();
+        const active = snap.docs
+          .map(d=>({id:d.id, ...d.data()}))
+          .filter(p => p.lastActive && (now - p.lastActive.toMillis()) < 60000);
+        renderPresence(active);
+      });
+
+      // Tick my presence every 25s
+      heartbeat();
+      clearInterval(window._presenceInt);
+      window._presenceInt = setInterval(heartbeat, 25000);
+    }
+
+    async function heartbeat(){
+      if(!currentTripId || !currentUser) return;
+      await setDoc(doc(db, 'trips', currentTripId, 'presence', currentUser.uid), {
+        displayName: localStorage.getItem('displayName') || 'Anon',
+        lastActive: serverTimestamp()
+      }, { merge: true });
+    }
+
+    $('#addItemBtn').onclick = async ()=>{
+      if(!currentTripId || !selectedBagId) return alert('Select a bag first.');
+      const name = $('#itemName').value.trim();
+      const qty = parseInt($('#itemQty').value)||1;
+      if(!name) return alert('Enter an item name');
+      await addDoc(collection(db, 'trips', currentTripId, 'bags', selectedBagId, 'items'), {
+        name, qty, packed:false, updatedAt: serverTimestamp(), updatedByUid: currentUser?.uid||null, updatedByName: localStorage.getItem('displayName')||'Anon'
+      });
+      $('#itemName').value=''; $('#itemQty').value='1';
+    };
+
+    async function loadItems(){
+      if(unsubscribeItems) unsubscribeItems();
+      if(!currentTripId || !selectedBagId){ renderItemsList([]); setStats({bags:[], items:[]}); return; }
+      const qItems = query(collection(db,'trips',currentTripId,'bags',selectedBagId,'items'), orderBy('updatedAt','desc'));
+      unsubscribeItems = onSnapshot(qItems, (snap)=>{
+        const items = snap.docs.map(d=>({id:d.id, ...d.data()}));
+        renderItemsList(items);
+        // recompute trip stats
+        recomputeTripStats();
+      });
+    }
+
+    async function recomputeTripStats(){
+      if(!currentTripId){ setStats({bags:[],items:[]}); return; }
+      const bagsSnap = await getDocs(collection(db,'trips',currentTripId,'bags'));
+      const bags = bagsSnap.docs.map(d=>({id:d.id, ...d.data()}));
+      let allItems=[];
+      for(const b of bags){
+        const itemsSnap = await getDocs(collection(db,'trips',currentTripId,'bags',b.id,'items'));
+        allItems = allItems.concat(itemsSnap.docs.map(d=>d.data()));
+      }
+      setStats({bags, items: allItems});
+    }
+
+    // Keyboard niceties
+    $('#bagName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#addBagBtn').click(); });
+    $('#itemName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#addItemBtn').click(); });
+    $('#itemQty').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#addItemBtn').click(); });
+
   </script>
 </body>
 </html>
