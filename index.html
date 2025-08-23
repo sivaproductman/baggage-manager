@@ -422,7 +422,11 @@ $('#newTripBtn').onclick = async ()=>{
     function loadTrips(){
       // Owned trips
       if(unsubscribeTripsOwned) unsubscribeTripsOwned();
-      const qOwned = query(collection(db, 'trips'), where('ownerUid','==', currentUser?.uid||''), orderBy('createdAt','desc'));
+     const qOwned = query(
+      collection(db, 'trips'),
+      where('ownerUid','==', auth.currentUser?.uid || ''),
+      orderBy('createdAt','desc')
+);
       unsubscribeTripsOwned = onSnapshot(qOwned, (snap)=>{
         const owned = snap.docs.map(d=>({id:d.id, ...d.data()}));
         renderTripsList(mergeTrips(owned, lastJoinedCache));
@@ -456,14 +460,17 @@ $('#newTripBtn').onclick = async ()=>{
     }
 
     async function openTrip(id){
-      currentTripId = id; selectedBagId = null; loadBags();
-      const t = await getDoc(doc(db,'trips',id));
-      if(t.exists()){
-        $('#currentTripTitle').textContent = t.data().title || 'Trip';
-        setShareLink({ id, ...t.data() });
-        $('#shareBtn').disabled = false;
-      }
-    }
+      async function openTrip(id){
+  currentTripId = id;
+  selectedBagId = null;
+  loadBags();
+  const t = await getDoc(doc(db,'trips',id));
+  if(t.exists()){
+    $('#currentTripTitle').textContent = t.data().title || 'Trip';
+    setShareLink({ id, ...t.data() });
+    $('#shareBtn').disabled = false;
+  }
+}
 
     $('#copyShareBtn').onclick = ()=>{
       const v = $('#shareLink').value; if(!v) return; navigator.clipboard.writeText(v); alert('Share link copied!');
