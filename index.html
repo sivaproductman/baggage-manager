@@ -10,7 +10,7 @@
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0; background:linear-gradient(180deg,#0b1220,#0f172a); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;}
-    .app{display:grid; grid-template-columns:320px 1fr; height:100%;}
+    .app{display:grid; grid-template-columns:340px 1fr; height:100%;}
     @media (max-width: 980px){ .app{grid-template-columns:1fr} .sidebar{position:sticky; top:0; z-index:3} }
     .sidebar{padding:16px; background:rgba(17,24,39,.7); backdrop-filter: blur(10px); border-right:1px solid rgba(255,255,255,.06)}
     .brand{display:flex; align-items:center; justify-content:space-between; gap:12px;}
@@ -68,17 +68,16 @@
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-left">
-          <div class="logo"></div>
-          <h1>Travel Baggage Manager</h1>
-        </div>
-        <div class="row">
-          <input id="displayName" class="input" placeholder="Your name" style="max-width:160px"/>
-          <button id="saveNameBtn" class="btn secondary">Save</button>
-        </div>
-      </div>
-
+     <div class="brand">
+  <div class="brand-left">
+    <div class="logo"></div>
+    <h1>Travel Baggage Manager</h1>
+  </div>
+</div>
+<div class="row" style="margin-top:8px">
+  <input id="displayName" class="input" placeholder="Your name" style="max-width:160px"/>
+  <button id="saveNameBtn" class="btn secondary">Save</button>
+</div>
       <div class="section-title"><span>Your Trips</span>
         <div class="row">
           <button id="newTripBtn" class="btn">New Trip</button>
@@ -363,16 +362,23 @@ const firebaseConfig = {
 
     // ===== 4) Auth and bootstrap =====
     onAuthStateChanged(auth, async (user) => {
-      if(user){
-        currentUser = user;
-        const name = localStorage.getItem('displayName') || '';
-        $('#displayName').value = name;
-        await bootstrapFromUrl();
-        loadTrips();
-      } else {
-        await signInAnonymously(auth);
-      }
-    });
+  if(user){
+    currentUser = user;
+    const name = localStorage.getItem('displayName') || '';
+    $('#displayName').value = name;
+
+    $('#newTripBtn').disabled = false;     // enable after sign-in
+    $('#addBagBtn').disabled = false;
+
+    await bootstrapFromUrl();
+    loadTrips();
+  } else {
+    $('#newTripBtn').disabled = true;
+    $('#addBagBtn').disabled = true;
+    await signInAnonymously(auth);
+  }
+});
+
 
     $('#saveNameBtn').onclick = ()=>{
       const name = $('#displayName').value.trim();
@@ -399,23 +405,19 @@ const firebaseConfig = {
     }
 
     // ===== 5) Trips CRUD & listeners =====
-    $('#newTripBtn').onclick = async ()=>{
-      const title = prompt('Trip title (e.g., Goa weekend)?','My Trip');
-      if(!title) return;
-      const shareKey = uid()+uid(); // 16 chars
-      const docRef = await addDoc(collection(db, 'trips'), {
-        title: title.trim(),
-        ownerUid: currentUser?.uid || null,
-        shareKey,
-        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-      });
-      currentTripId = docRef.id;
-      // Owner can open trip immediately
-      loadBags();
-      const snap = await getDoc(docRef);
-      setShareLink({ id: docRef.id, ...snap.data() });
-      $('#shareBtn').disabled = false;
-    };
+$('#newTripBtn').onclick = async ()=>{
+  if(!auth.currentUser){ await signInAnonymously(auth); }  // make sure we have a UID
+  const title = prompt('Trip title (e.g., Goa weekend)?','My Trip');
+  if(!title) return;
+  const shareKey = uid()+uid();
+  const docRef = await addDoc(collection(db, 'trips'), {
+    title: title.trim(),
+    ownerUid: auth.currentUser.uid,        // ensure owner is set
+    shareKey,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+  });
+  await openTrip(docRef.id);               // open immediately so the header updates
+};
 
     function loadTrips(){
       // Owned trips
